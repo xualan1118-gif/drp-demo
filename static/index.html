@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数字化分货系统</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    :root {
+      --hw-red: #CF0A2C;
+      --hw-red-dark: #A00823;
+      --hw-white: #FFFFFF;
+      --hw-gray: #F5F5F5;
+      --hw-dark: #1A1A1A;
+      --hw-green: #00A651;
+      --hw-orange: #FF9933;
+      --border: #E8E8E8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--hw-gray);
+      min-height: 100vh;
+      color: var(--hw-dark);
+    }
+    .hidden { display: none !important; }
+    .login-container {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #CF0A2C 0%, #8B0000 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-box {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .login-title { text-align: center; font-size: 22px; font-weight: 600; margin-bottom: 32px; }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .form-input {
+      width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none;
+    }
+    .form-input:focus { border-color: var(--hw-red); }
+    .login-btn {
+      width: 100%; padding: 13px; background: var(--hw-red); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 8px;
+    }
+    .login-btn:hover { background: var(--hw-red-dark); }
+    .demo-accounts {
+      margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #888; line-height: 1.7;
+    }
+    .demo-accounts b { color: #555; }
+    .demo-accounts span {
+      display: inline-block; background: #f5f5f5; padding: 2px 8px; border-radius: 4px; margin: 2px 4px 2px 0; cursor: pointer; color: var(--hw-red);
+    }
+    .header {
+      background: white; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .system-title { font-size: 18px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .user-info { text-align: right; }
+    .user-name { font-size: 14px; font-weight: 500; }
+    .user-role { font-size: 12px; color: #999; }
+    .btn-sm { padding: 6px 14px; border: 1px solid #ddd; background: white; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .btn-sm:hover { background: #f5f5f5; }
+    .btn-primary { background: var(--hw-red); color: white; border-color: var(--hw-red); }
+    .btn-primary:hover { background: var(--hw-red-dark); }
+    .btn-success { background: var(--hw-green); color: white; border-color: var(--hw-green); }
+    .layout { display: flex; min-height: calc(100vh - 57px); }
+    .sidebar { width: 220px; background: white; border-right: 1px solid var(--border); padding: 16px 0; flex-shrink: 0; }
+    .nav-link {
+      display: block; padding: 12px 24px; color: #444; text-decoration: none; font-size: 14px; cursor: pointer; border-left: 3px solid transparent;
+    }
+    .nav-link:hover { background: #fafafa; color: var(--hw-red); }
+    .nav-link.active { background: #fff5f5; color: var(--hw-red); border-left-color: var(--hw-red); font-weight: 500; }
+    .main-content { flex: 1; padding: 24px; overflow: auto; }
+    .page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); margin-bottom: 20px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+    .stat-label { font-size: 13px; color: #888; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 600; }
+    .stat-value.red { color: var(--hw-red); }
+    .stat-value.green { color: var(--hw-green); }
+    .stat-value.orange { color: var(--hw-orange); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #fafafa; font-weight: 500; color: #666; white-space: nowrap; }
+    tr:hover td { background: #fafafa; }
+    .status-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .status-pending-city { background: #fff3e0; color: #e65100; }
+    .status-pending-product { background: #e3f2fd; color: #1565c0; }
+    .status-pending-sales { background: #f3e5f5; color: #7b1fa2; }
+    .status-pending-distribution { background: #e8f5e9; color: #2e7d32; }
+    .status-approved { background: #e8f5e9; color: #1b5e20; }
+    .status-rejected { background: #ffebee; color: #c62828; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-row.full { grid-template-columns: 1fr; }
+    select.form-input { appearance: auto; }
+    .toast {
+      position: fixed; top: 24px; right: 24px; padding: 12px 20px; background: #333; color: white; border-radius: 8px; font-size: 14px; z-index: 9999;
+      opacity: 0; transform: translateY(-10px); transition: all 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--hw-green); }
+    .toast.error { background: var(--hw-red); }
+    .empty { text-align: center; padding: 60px 20px; color: #999; }
+    .chart-box { height: 300px; }
+    @media (max-width: 768px) { .sidebar { display: none; } .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div id="loginPage" class="login-container">
+  <div class="login-box">
+    <h1 class="login-title">数字化分货系统</h1>
+    <div class="form-group">
+      <label class="form-label">用户名</label>
+      <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名">
+    </div>
+    <div class="form-group">
+      <label class="form-label">密码</label>
+      <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">登录</button>
+    <div class="demo-accounts">
+      <b>演示账号（点击填入，密码均为 123456）：</b><br>
+      <span onclick="fillLogin('ka01')">KA客户 ka01</span>
+      <span onclick="fillLogin('city01')">地市主管 city01</span>
+      <span onclick="fillLogin('pm01')">产品经理 pm01</span><br>
+      <span onclick="fillLogin('sales01')">销售主管 sales01</span>
+      <span onclick="fillLogin('dist01')">分货专员 dist01</span>
+      <span onclick="fillLogin('admin')">省级管理员 admin</span>
+    </div>
+  </div>
+</div>
+<div id="mainApp" class="hidden">
+  <header class="header">
+    <div class="header-left"><span class="system-title">数字化分货系统</span></div>
+    <div class="header-right">
+      <div class="user-info">
+        <div class="user-name" id="userDisplayName">-</div>
+        <div class="user-role" id="userRoleName">-</div>
+      </div>
+      <button class="btn-sm" onclick="doLogout()">退出</button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content" id="mainContent"></main>
+  </div>
+</div>
+<div id="toast" class="toast"><span id="toastMessage"></span></div>
+<script>
+const STATUS_NAMES = { pending_city: '待地市审批', pending_product: '待产品审视', pending_sales: '待销售审批', pending_distribution: '待分货处理', approved: '已批准', rejected: '已驳回' };
+const STATUS_CLASS = { pending_city: 'status-pending-city', pending_product: 'status-pending-product', pending_sales: 'status-pending-sales', pending_distribution: 'status-pending-distribution', approved: 'status-approved', rejected: 'status-rejected' };
+let currentUser = null;
+let productTree = [];
+async function api(url, options = {}) {
+  const res = await fetch('/api' + url, { credentials: 'include', headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }, ...options });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    currentUser = null;
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('loginPage').classList.remove('hidden');
+    throw new Error('未登录');
+  }
+  return data;
+}
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMessage').textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function fillLogin(u) {
+  document.getElementById('loginUsername').value = u;
+  document.getElementById('loginPassword').value = '123456';
+}
+async function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!username || !password) return showToast('请输入用户名和密码', 'error');
+  try {
+    const res = await api('/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    if (!res.success) return showToast(res.message || '登录失败', 'error');
+    currentUser = res.user;
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('userDisplayName').textContent = currentUser.name;
+    document.getElementById('userRoleName').textContent = currentUser.roleName;
+    renderSidebar();
+    showPage('dashboard');
+    showToast('欢迎，' + currentUser.name, 'success');
+    const p = await api('/products');
+    if (p.success) productTree = p.data;
+  } catch (e) { showToast('网络错误', 'error'); }
+}
+async function doLogout() {
+  await api('/logout', { method: 'POST' });
+  currentUser = null;
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginPage').classList.remove('hidden');
+}
+function renderSidebar() {
+  const role = currentUser.role;
+  const menus = [
+    { id: 'dashboard', label: '📊 PSI 看板', roles: ['*'] },
+    { id: 'create', label: '📝 新建提报', roles: ['ka', 'province'] },
+    { id: 'myOrders', label: '📋 我的提报', roles: ['ka'] },
+    { id: 'pending', label: '⏳ 待我审批', roles: ['city_manager', 'product_manager', 'sales_manager', 'distribution', 'province'] },
+    { id: 'allOrders', label: '📦 全部订单', roles: ['city_manager', 'product_manager', 'sales_manager', 'distribution', 'province'] },
+    { id: 'users', label: '👥 用户管理', roles: ['province'] }
+  ];
+  document.getElementById('sidebar').innerHTML = menus.filter(m => m.roles.includes('*') || m.roles.includes(role)).map(m => `<div class="nav-link" data-page="${m.id}" onclick="showPage('${m.id}')">${m.label}</div>`).join('');
+}
+function showPage(page) {
+  document.querySelectorAll('.nav-link').forEach(el => el.classList.toggle('active', el.dataset.page === page));
+  const main = document.getElementById('mainContent');
+  if (page === 'dashboard') renderDashboard(main);
+  else if (page === 'create') renderCreate(main);
+  else if (page === 'myOrders') renderOrderList(main, 'my');
+  else if (page === 'pending') renderOrderList(main, 'pending');
+  else if (page === 'allOrders') renderOrderList(main, 'all');
+  else if (page === 'users') renderUsers(main);
+}
+async function renderDashboard(container) {
+  container.innerHTML = '<div class="page-title">PSI 看板</div><div class="empty">加载中...</div>';
+  try {
+    const res = await api('/stats');
+    const s = res.data || {};
+    const ordersRes = await api('/orders?mode=all');
+    const orders = ordersRes.data || [];
+    container.innerHTML = `
+      <div class="page-title">PSI 看板</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">提报总数</div><div class="stat-value">${s.total || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">待处理</div><div class="stat-value orange">${s.pending || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">已批准</div><div class="stat-value green">${s.approved || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">已驳回</div><div class="stat-value red">${s.rejected || 0}</div></div>
+        <div class="stat-card"><div class="stat-label">已批准总量</div><div class="stat-value">${s.totalQty || 0}</div></div>
+      </div>
+      <div class="card"><div style="font-weight:500;margin-bottom:12px;">状态分布</div><div id="chartStatus" class="chart-box"></div></div>
+      <div class="card"><div style="font-weight:500;margin-bottom:12px;">产品提报量</div><div id="chartProduct" class="chart-box"></div></div>`;
+    const statusCount = {};
+    orders.forEach(o => { const name = STATUS_NAMES[o.status] || o.status; statusCount[name] = (statusCount[name] || 0) + 1; });
+    echarts.init(document.getElementById('chartStatus')).setOption({ tooltip: { trigger: 'item' }, series: [{ type: 'pie', radius: ['40%', '70%'], data: Object.entries(statusCount).map(([name, value]) => ({ name, value })) }] });
+    const productCount = {};
+    orders.forEach(o => { productCount[o.product] = (productCount[o.product] || 0) + o.quantity; });
+    echarts.init(document.getElementById('chartProduct')).setOption({ tooltip: { trigger: 'axis' }, xAxis: { type: 'category', data: Object.keys(productCount), axisLabel: { rotate: 15 } }, yAxis: { type: 'value' }, series: [{ type: 'bar', data: Object.values(productCount), itemStyle: { color: '#CF0A2C' }, barWidth: '40%' }] });
+  } catch (e) { container.innerHTML = '<div class="empty">加载失败</div>'; }
+}
+function renderCreate(container) {
+  container.innerHTML = `
+    <div class="page-title">新建提报</div>
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">品类</label>
+          <select class="form-input" id="selCategory" onchange="onCategoryChange()"><option value="">请选择</option>${productTree.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="form-label">产品</label>
+          <select class="form-input" id="selProduct" onchange="onProductChange()" disabled><option value="">请先选品类</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">内存版本</label>
+          <select class="form-input" id="selMemory" onchange="onMemoryChange()" disabled><option value="">请先选产品</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">颜色</label>
+          <select class="form-input" id="selColor" disabled><option value="">请先选内存</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">申请数量</label><input type="number" class="form-input" id="inpQty" min="1" value="10"></div>
+        <div class="form-group"><label class="form-label">所属城市</label><input type="text" class="form-input" id="inpCity" value="${currentUser.city || '乌鲁木齐'}"></div>
+      </div>
+      <div class="form-row full"><div class="form-group"><label class="form-label">备注</label><input type="text" class="form-input" id="inpRemark" placeholder="可选"></div></div>
+      <div style="margin-top:16px;"><button class="btn-sm btn-primary" style="padding:10px 28px;" onclick="submitOrder()">提交提报</button></div>
+    </div>`;
+}
+function onCategoryChange() {
+  const cat = document.getElementById('selCategory').value;
+  const prodSel = document.getElementById('selProduct');
+  const memSel = document.getElementById('selMemory');
+  const colorSel = document.getElementById('selColor');
+  prodSel.innerHTML = '<option value="">请选择</option>';
+  memSel.innerHTML = '<option value="">请先选产品</option>';
+  colorSel.innerHTML = '<option value="">请先选内存</option>';
+  memSel.disabled = colorSel.disabled = true;
+  if (!cat) { prodSel.disabled = true; return; }
+  const node = productTree.find(c => c.name === cat);
+  node.children.forEach(p => prodSel.innerHTML += `<option value="${p.name}">${p.name}</option>`);
+  prodSel.disabled = false;
+}
+function onProductChange() {
+  const cat = document.getElementById('selCategory').value;
+  const prod = document.getElementById('selProduct').value;
+  const memSel = document.getElementById('selMemory');
+  const colorSel = document.getElementById('selColor');
+  memSel.innerHTML = '<option value="">请选择</option>';
+  colorSel.innerHTML = '<option value="">请先选内存</option>';
+  colorSel.disabled = true;
+  if (!prod) { memSel.disabled = true; return; }
+  const catNode = productTree.find(c => c.name === cat);
+  const prodNode = catNode.children.find(p => p.name === prod);
+  prodNode.children.forEach(m => memSel.innerHTML += `<option value="${m.name}">${m.name}</option>`);
+  memSel.disabled = false;
+}
+function onMemoryChange() {
+  const cat = document.getElementById('selCategory').value;
+  const prod = document.getElementById('selProduct').value;
+  const mem = document.getElementById('selMemory').value;
+  const colorSel = document.getElementById('selColor');
+  colorSel.innerHTML = '<option value="">请选择</option>';
+  if (!mem) { colorSel.disabled = true; return; }
+  const catNode = productTree.find(c => c.name === cat);
+  const prodNode = catNode.children.find(p => p.name === prod);
+  const memNode = prodNode.children.find(m => m.name === mem);
+  memNode.children.forEach(c => colorSel.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+  colorSel.disabled = false;
+}
+async function submitOrder() {
+  const category = document.getElementById('selCategory').value;
+  const product = document.getElementById('selProduct').value;
+  const memory = document.getElementById('selMemory').value;
+  const color = document.getElementById('selColor').value;
+  const quantity = parseInt(document.getElementById('inpQty').value, 10);
+  const city = document.getElementById('inpCity').value.trim();
+  const remark = document.getElementById('inpRemark').value.trim();
+  if (!category || !product || !memory || !color) return showToast('请完整选择产品', 'error');
+  if (!quantity || quantity < 1) return showToast('请输入有效数量', 'error');
+  const res = await api('/orders', { method: 'POST', body: JSON.stringify({ category, product, memory, color, quantity, city, remark }) });
+  if (res.success) { showToast('提报成功', 'success'); showPage('myOrders'); }
+  else showToast(res.message || '提交失败', 'error');
+}
+async function renderOrderList(container, mode) {
+  container.innerHTML = '<div class="page-title">加载中...</div>';
+  const titles = { my: '我的提报', pending: '待我审批', all: '全部订单' };
+  try {
+    const res = await api('/orders?mode=' + mode);
+    const list = res.data || [];
+    const canApprove = (o) => {
+      const role = currentUser.role;
+      if (role === 'province') return o.status.startsWith('pending');
+      const map = { city_manager: 'pending_city', product_manager: 'pending_product', sales_manager: 'pending_sales', distribution: 'pending_distribution' };
+      return o.status === map[role];
+    };
+    container.innerHTML = `
+      <div class="page-title">${titles[mode] || '订单'} <span style="font-size:14px;color:#999;font-weight:400;">共 ${list.length} 条</span></div>
+      <div class="card" style="padding:0;overflow:auto;">
+        ${list.length === 0 ? '<div class="empty">暂无数据</div>' : `
+        <table>
+          <thead><tr><th>单号</th><th>申请人</th><th>城市</th><th>产品</th><th>配置</th><th>数量</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+          <tbody>
+            ${list.map(o => `
+              <tr>
+                <td style="font-family:monospace;font-size:12px;">${o.id}</td>
+                <td>${o.applicant_name}</td><td>${o.city}</td><td>${o.product}</td>
+                <td>${o.memory} / ${o.color}</td><td><b>${o.quantity}</b></td>
+                <td><span class="status-tag ${STATUS_CLASS[o.status]}">${STATUS_NAMES[o.status]}</span></td>
+                <td style="font-size:12px;white-space:nowrap;">${o.created_at}</td>
+                <td>
+                  <button class="btn-sm" onclick='showDetail(${JSON.stringify(o).replace(/'/g, "&#39;")})'>详情</button>
+                  ${canApprove(o) ? `<button class="btn-sm btn-success" onclick="doAction('${o.id}','approve')">通过</button>
+                  <button class="btn-sm" style="color:#c62828;" onclick="doAction('${o.id}','reject')">驳回</button>` : ''}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`}
+      </div>`;
+  } catch (e) { container.innerHTML = '<div class="empty">加载失败</div>'; }
+}
+function showDetail(o) {
+  const hist = (o.history || []).map(h => `${h.time}  ${h.user}：${h.action}`).join('\n');
+  alert(`单号：${o.id}\n申请人：${o.applicant_name}\n城市：${o.city}\n产品：${o.category} / ${o.product}\n配置：${o.memory} / ${o.color}\n数量：${o.quantity}\n备注：${o.remark || '无'}\n状态：${STATUS_NAMES[o.status]}\n\n审批轨迹：\n${hist}`);
+}
+async function doAction(id, action) {
+  if (action === 'reject' && !confirm('确认驳回？')) return;
+  const res = await api(`/orders/${id}/action`, { method: 'POST', body: JSON.stringify({ action }) });
+  if (res.success) { showToast(res.message || '操作成功', 'success'); showPage('pending'); }
+  else showToast(res.message || '操作失败', 'error');
+}
+async function renderUsers(container) {
+  container.innerHTML = '<div class="page-title">用户管理</div><div class="empty">加载中...</div>';
+  try {
+    const res = await api('/users');
+    const list = res.data || [];
+    container.innerHTML = `
+      <div class="page-title">用户管理</div>
+      <div class="card" style="padding:0;overflow:auto;">
+        <table><thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>城市</th></tr></thead>
+        <tbody>${list.map(u => `<tr><td>${u.id}</td><td>${u.name}</td><td>${u.roleName}</td><td>${u.city || '-'}</td></tr>`).join('')}</tbody></table>
+      </div>`;
+  } catch (e) { container.innerHTML = '<div class="empty">无权限或加载失败</div>'; }
+}
+(async () => {
+  try {
+    const res = await api('/me');
+    if (res.success) {
+      currentUser = res.user;
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      document.getElementById('userDisplayName').textContent = currentUser.name;
+      document.getElementById('userRoleName').textContent = currentUser.roleName;
+      renderSidebar();
+      const p = await api('/products');
+      if (p.success) productTree = p.data;
+      showPage('dashboard');
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
